@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draft Room Challenge — Fit vs BPA</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --nba-orange: #f57c25;
+  --nba-blue: #1d428a;
+  --nfl-blue: #013369;
+  --nfl-red: #d50a0a;
+  --gold: #ffd700;
+  --green: #27ae60;
+  --dark: #1a1a2e;
+  --darker: #0f0f1e;
+  --card-bg: #16213e;
+  --easy-color: #2ecc71;
+  --medium-color: #f39c12;
+  --hard-color: #e74c3c;
+  --glow-blue: #00d4ff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--darker);
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* PARTICLE BACKGROUND */
+.particles {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; overflow: hidden;
+}
+.particle {
+  position: absolute; border-radius: 50%; opacity: 0.3;
+  animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+}
+
+/* CONFETTI */
+.confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+.confetti-piece {
+  position: absolute; top: -20px;
+  width: 12px; height: 12px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(1080deg); opacity: 0; }
+}
+
+/* SCREENS */
+.screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding: 20px; }
+.screen.active { display: flex; flex-direction: column; align-items: center; }
+
+/* TITLE SCREEN */
+#title-screen {
+  justify-content: center; text-align: center;
+  background: radial-gradient(ellipse at center, #1a1a3e 0%, var(--darker) 70%);
+}
+.game-logo {
+  font-family: 'Bangers', cursive; font-size: clamp(2.5rem, 8vw, 5rem);
+  background: linear-gradient(135deg, var(--gold), var(--nba-orange), var(--nfl-red));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-shadow: none; margin-bottom: 5px;
+  animation: logoGlow 2s ease-in-out infinite alternate;
+}
+@keyframes logoGlow {
+  0% { filter: brightness(1) drop-shadow(0 0 10px rgba(255,215,0,0.3)); }
+  100% { filter: brightness(1.2) drop-shadow(0 0 25px rgba(255,215,0,0.6)); }
+}
+.subtitle {
+  font-size: clamp(1rem, 3vw, 1.4rem); color: #aaa; margin-bottom: 30px;
+  font-weight: 600;
+}
+.subtitle span { color: var(--glow-blue); font-weight: 800; }
+
+/* BUTTONS */
+.btn {
+  display: inline-block; padding: 14px 36px; border: none; border-radius: 14px;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.1rem;
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+.btn:active { transform: translateY(-1px); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--glow-blue), #0077ff);
+  color: #fff; font-size: 1.3rem; padding: 18px 50px;
+}
+.btn-easy { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; }
+.btn-medium { background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; }
+.btn-hard { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; }
+.btn-sm { padding: 10px 24px; font-size: 0.95rem; }
+.btn-outline {
+  background: transparent; border: 2px solid var(--glow-blue); color: var(--glow-blue);
+}
+.btn-gold {
+  background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a2e;
+}
+
+/* MASCOT */
+.mascot-container { margin: 20px 0; position: relative; }
+.mascot {
+  font-size: 5rem; animation: mascotBounce 1s ease-in-out infinite;
+  display: inline-block;
+}
+@keyframes mascotBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+.speech-bubble {
+  background: var(--card-bg); border: 2px solid var(--glow-blue);
+  border-radius: 20px; padding: 15px 25px; max-width: 500px; margin: 15px auto;
+  position: relative; font-size: 1.05rem; line-height: 1.5;
+}
+.speech-bubble::after {
+  content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  border-left: 12px solid transparent; border-right: 12px solid transparent;
+  border-bottom: 12px solid var(--glow-blue);
+}
+
+/* DIFFICULTY SELECT */
+#difficulty-screen { justify-content: center; text-align: center; }
+.tier-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin: 30px 0; }
+.tier-card {
+  background: var(--card-bg); border-radius: 20px; padding: 30px 25px;
+  width: 280px; cursor: pointer; transition: all 0.3s;
+  border: 3px solid transparent; position: relative; overflow: hidden;
+}
+.tier-card:hover { transform: translateY(-8px) scale(1.02); }
+.tier-card.easy { border-color: var(--easy-color); }
+.tier-card.easy:hover { box-shadow: 0 10px 40px rgba(46,204,113,0.3); }
+.tier-card.medium { border-color: var(--medium-color); }
+.tier-card.medium:hover { box-shadow: 0 10px 40px rgba(243,156,18,0.3); }
+.tier-card.hard { border-color: var(--hard-color); }
+.tier-card.hard:hover { box-shadow: 0 10px 40px rgba(231,76,60,0.3); }
+.tier-icon { font-size: 3rem; margin-bottom: 10px; }
+.tier-title { font-family: 'Bangers', cursive; font-size: 1.8rem; margin-bottom: 8px; }
+.tier-desc { color: #aaa; font-size: 0.95rem; line-height: 1.4; }
+.tier-badge {
+  display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.8rem;
+  font-weight: 800; margin-top: 12px; text-transform: uppercase;
+}
+.tier-card.easy .tier-badge { background: var(--easy-color); color: #000; }
+.tier-card.medium .tier-badge { background: var(--medium-color); color: #000; }
+.tier-card.hard .tier-badge { background: var(--hard-color); color: #fff; }
+
+/* TEAM SETUP */
+#team-setup { justify-content: center; text-align: center; }
+.team-name-input {
+  background: var(--card-bg); border: 2px solid #333; border-radius: 14px;
+  padding: 14px 24px; font-size: 1.2rem; color: #fff; width: 300px;
+  font-family: 'Nunito', sans-serif; font-weight: 700; text-align: center;
+  transition: border-color 0.3s;
+}
+.team-name-input:focus { outline: none; border-color: var(--glow-blue); }
+.avatar-grid {
+  display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin: 20px 0;
+}
+.avatar-option {
+  font-size: 2.5rem; padding: 10px; border-radius: 14px; cursor: pointer;
+  border: 3px solid transparent; background: var(--card-bg); transition: all 0.2s;
+  width: 65px; height: 65px; display: flex; align-items: center; justify-content: center;
+}
+.avatar-option:hover { border-color: var(--glow-blue); transform: scale(1.1); }
+.avatar-option.selected { border-color: var(--gold); background: rgba(255,215,0,0.15); transform: scale(1.15); }
+
+/* GAME SCREEN */
+#game-screen { padding: 15px; }
+.game-hud {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 900px; padding: 12px 20px;
+  background: var(--card-bg); border-radius: 14px; margin-bottom: 15px;
+  flex-wrap: wrap; gap: 10px;
+}
+.hud-item { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.hud-label { color: #888; font-size: 0.8rem; text-transform: uppercase; }
+.hud-value { font-size: 1.1rem; }
+.score-display { color: var(--gold); font-family: 'Bangers', cursive; font-size: 1.4rem; }
+
+.progress-bar-container {
+  width: 100%; max-width: 900px; height: 12px; background: #222;
+  border-radius: 10px; overflow: hidden; margin-bottom: 20px;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 10px; transition: width 0.5s ease;
+  background: linear-gradient(90deg, var(--glow-blue), var(--gold));
+}
+
+/* SCENARIO CARD */
+.scenario-card {
+  background: var(--card-bg); border-radius: 20px; padding: 30px;
+  max-width: 900px; width: 100%; position: relative; overflow: hidden;
+}
+.scenario-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--glow-blue), var(--gold), var(--nba-orange));
+}
+.scenario-league {
+  display: inline-block; padding: 4px 14px; border-radius: 8px;
+  font-weight: 800; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 12px;
+}
+.scenario-league.nba { background: var(--nba-orange); color: #fff; }
+.scenario-league.nfl { background: var(--nfl-blue); color: #fff; }
+.scenario-team-name {
+  font-family: 'Bangers', cursive; font-size: clamp(1.5rem, 4vw, 2.2rem);
+  margin-bottom: 8px;
+}
+.scenario-record { color: var(--gold); font-weight: 700; margin-bottom: 15px; }
+.scenario-details {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0;
+}
+@media (max-width: 600px) { .scenario-details { grid-template-columns: 1fr; } }
+.detail-box {
+  background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 16px;
+}
+.detail-box h4 { color: var(--glow-blue); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; }
+.detail-box p { font-size: 0.95rem; line-height: 1.4; }
+.strengths { border-left: 3px solid var(--green); }
+.weaknesses { border-left: 3px solid var(--hard-color); }
+
+.question-box {
+  background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(255,215,0,0.05));
+  border: 2px solid rgba(0,212,255,0.3); border-radius: 14px;
+  padding: 20px; margin: 20px 0 15px; text-align: center;
+}
+.question-box h3 { font-size: 1.2rem; margin-bottom: 8px; color: var(--glow-blue); }
+.question-box p { font-size: 1.05rem; line-height: 1.5; }
+
+/* PROSPECT CARDS */
+.prospect-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 15px;
+}
+@media (max-width: 650px) { .prospect-grid { grid-template-columns: 1fr; } }
+.prospect-card {
+  background: rgba(255,255,255,0.04); border: 2px solid #333;
+  border-radius: 16px; padding: 18px; cursor: pointer; transition: all 0.25s;
+  position: relative; overflow: hidden;
+}
+.prospect-card:hover {
+  border-color: var(--glow-blue); transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,212,255,0.15);
+}
+.prospect-card.selected {
+  border-color: var(--gold); background: rgba(255,215,0,0.08);
+  box-shadow: 0 8px 30px rgba(255,215,0,0.2);
+}
+.prospect-card.correct {
+  border-color: var(--green); background: rgba(39,174,96,0.15);
+  animation: correctPulse 0.5s ease;
+}
+.prospect-card.wrong {
+  border-color: var(--hard-color); background: rgba(231,76,60,0.1);
+  animation: wrongShake 0.5s ease;
+}
+@keyframes correctPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+.prospect-name { font-weight: 800; font-size: 1.1rem; margin-bottom: 6px; }
+.prospect-pos { color: var(--glow-blue); font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; }
+.prospect-info { font-size: 0.9rem; color: #ccc; line-height: 1.4; }
+.prospect-tag {
+  display: inline-block; padding: 2px 10px; border-radius: 8px; font-size: 0.75rem;
+  font-weight: 700; margin-top: 8px;
+}
+.tag-fit { background: rgba(46,204,113,0.2); color: var(--green); border: 1px solid var(--green); }
+.tag-bpa { background: rgba(0,212,255,0.2); color: var(--glow-blue); border: 1px solid var(--glow-blue); }
+.tag-risky { background: rgba(243,156,18,0.2); color: var(--medium-color); border: 1px solid var(--medium-color); }
+
+/* HINT SYSTEM */
+.hint-btn {
+  background: rgba(255,215,0,0.15); border: 1px solid var(--gold); color: var(--gold);
+  padding: 8px 18px; border-radius: 10px; cursor: pointer; font-weight: 700;
+  font-size: 0.9rem; transition: all 0.2s; margin-top: 10px;
+}
+.hint-btn:hover { background: rgba(255,215,0,0.25); }
+.hint-text {
+  background: rgba(255,215,0,0.08); border-left: 3px solid var(--gold);
+  padding: 12px 16px; border-radius: 0 10px 10px 0; margin-top: 12px;
+  font-size: 0.95rem; line-height: 1.5; color: #ddd; display: none;
+}
+.hint-text.show { display: block; animation: fadeIn 0.3s ease; }
+
+/* FEEDBACK */
+.feedback-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); z-index: 100; justify-content: center;
+  align-items: center; padding: 20px;
+}
+.feedback-overlay.active { display: flex; }
+.feedback-card {
+  background: var(--card-bg); border-radius: 24px; padding: 35px;
+  max-width: 550px; width: 100%; text-align: center;
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.feedback-icon { font-size: 4rem; margin-bottom: 15px; }
+.feedback-title { font-family: 'Bangers', cursive; font-size: 2rem; margin-bottom: 10px; }
+.feedback-text { color: #ccc; font-size: 1rem; line-height: 1.6; margin-bottom: 20px; }
+.points-earned {
+  font-family: 'Bangers', cursive; font-size: 1.8rem; color: var(--gold);
+  margin-bottom: 20px;
+}
+
+/* RESULT SCREEN */
+#result-screen { justify-content: center; text-align: center; }
+.result-card {
+  background: var(--card-bg); border-radius: 24px; padding: 40px;
+  max-width: 600px; width: 100%; position: relative; overflow: hidden;
+}
+.result-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+  background: linear-gradient(90deg, var(--gold), var(--nba-orange), var(--nfl-red), var(--glow-blue));
+}
+.result-icon { font-size: 5rem; margin-bottom: 10px; }
+.result-title {
+  font-family: 'Bangers', cursive; font-size: clamp(2rem, 5vw, 3rem);
+  margin-bottom: 10px;
+}
+.result-score {
+  font-family: 'Bangers', cursive; font-size: 2.5rem; color: var(--gold);
+  margin: 15px 0;
+}
+.result-stars { font-size: 2.5rem; margin: 10px 0; }
+.claim-code-box {
+  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.1));
+  border: 2px dashed var(--gold); border-radius: 16px; padding: 20px;
+  margin: 20px 0;
+}
+.claim-code-label { font-size: 0.9rem; color: var(--gold); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; }
+.claim-code {
+  font-family: 'Bangers', cursive; font-size: 2.2rem; color: #fff;
+  letter-spacing: 4px; user-select: all;
+}
+.claim-copy-btn {
+  background: var(--gold); color: #000; border: none; padding: 8px 20px;
+  border-radius: 8px; font-weight: 800; cursor: pointer; margin-top: 10px;
+  font-family: 'Nunito', sans-serif; transition: all 0.2s;
+}
+.claim-copy-btn:hover { transform: scale(1.05); }
+
+/* TIMER */
+.timer-bar {
+  width: 100%; max-width: 900px; height: 8px; background: #222;
+  border-radius: 10px; overflow: hidden; margin-bottom: 8px;
+}
+.timer-fill {
+  height: 100%; border-radius: 10px; transition: width 0.1s linear;
+  background: linear-gradient(90deg, var(--hard-color), var(--medium-color), var(--green));
+}
+
+/* STREAK */
+.streak-badge {
+  display: none; align-items: center; gap: 5px; padding: 4px 12px;
+  background: rgba(255,215,0,0.15); border-radius: 8px; font-weight: 800;
+  color: var(--gold); font-size: 0.9rem;
+}
+.streak-badge.show { display: flex; }
+
+/* ANIMATIONS */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.5s ease; }
+.slide-up { animation: slideUp 0.6s ease; }
+
+/* COMBO TEXT */
+.combo-float {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-family: 'Bangers', cursive; font-size: 3rem; color: var(--gold);
+  pointer-events: none; z-index: 200;
+  animation: comboFloat 1s ease forwards;
+}
+@keyframes comboFloat {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+  50% { opacity: 1; transform: translate(-50%, -80%) scale(1.3); }
+  100% { opacity: 0; transform: translate(-50%, -120%) scale(1); }
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--darker); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* LOCKED OVERLAY */
+.locked-overlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); border-radius: 17px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem;
+}
+</style>
+</head>
+<body>
+
+<!-- PARTICLES -->
+<div class="particles" id="particles"></div>
+
+<!-- CONFETTI -->
+<div class="confetti-container" id="confetti-container"></div>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div class="screen active" id="title-screen">
+  <div class="mascot-container">
+    <div class="mascot" id="main-mascot">🏆</div>
+  </div>
+  <div class="game-logo">DRAFT ROOM CHALLENGE</div>
+  <div class="subtitle">Think Like a GM — <span>Fit vs BPA</span></div>
+  <div class="speech-bubble">
+    <strong>Yo, future GM!</strong> You just got hired to run a pro sports team. Your job? Build a championship roster by making the smartest draft picks. Do you draft for <strong style="color:#2ecc71">FIT</strong> (what your team needs) or go <strong style="color:#00d4ff">BPA</strong> (best player available)? Let's find out if you've got what it takes!
+  </div>
+  <br>
+  <button class="btn btn-primary" onclick="showScreen('difficulty-screen')">LET'S GO!</button>
+</div>
+
+<!-- ===== DIFFICULTY SCREEN ===== -->
+<div class="screen" id="difficulty-screen">
+  <div class="mascot-container">
+    <div class="mascot">📋</div>
+  </div>
+  <h1 style="font-family:'Bangers',cursive; font-size:2.2rem; margin-bottom:5px;">PICK YOUR CHALLENGE</h1>
+  <p style="color:#aaa; margin-bottom:10px; font-size:1.05rem;">Each tier has a secret claim code if you pass!</p>
+
+  <div class="tier-cards">
+    <div class="tier-card easy" onclick="startGame('easy')">
+      <div class="tier-icon">🌟</div>
+      <div class="tier-title" style="color:var(--easy-color)">ROOKIE</div>
+      <div class="tier-desc">
+        You'll get <strong>big hints</strong> and helpful info. Just pick the player that sounds right for the team!
+        <br><br><em>Perfect for learning the basics!</em>
+      </div>
+      <div class="tier-badge">Easy Mode</div>
+    </div>
+    <div class="tier-card medium" onclick="startGame('medium')">
+      <div class="tier-icon">⚡</div>
+      <div class="tier-title" style="color:var(--medium-color)">SCOUT</div>
+      <div class="tier-desc">
+        Fewer hints, trickier choices. You'll need to <strong>think deeper</strong> about team needs and player strengths.
+        <br><br><em>Show off your sports brain!</em>
+      </div>
+      <div class="tier-badge">Medium Mode</div>
+    </div>
+    <div class="tier-card hard" onclick="startGame('hard')">
+      <div class="tier-icon">🔥</div>
+      <div class="tier-title" style="color:var(--hard-color)">GM ELITE</div>
+      <div class="tier-desc">
+        No hints, time pressure, and mind-bending scenarios. Only <strong>true GMs</strong> survive this gauntlet.
+        <br><br><em>Think you're ready? Prove it.</em>
+      </div>
+      <div class="tier-badge">Hard Mode</div>
+    </div>
+  </div>
+
+  <button class="btn btn-outline btn-sm" onclick="showScreen('title-screen')" style="margin-top:10px;">Back</button>
+</div>
+
+<!-- ===== TEAM SETUP ===== -->
+<div class="screen" id="team-setup">
+  <div class="mascot-container">
+    <div class="mascot">🎽</div>
+  </div>
+  <h1 style="font-family:'Bangers',cursive; font-size:2.2rem; margin-bottom:5px;">CREATE YOUR GM PROFILE</h1>
+  <p style="color:#aaa; margin-bottom:20px;">Who's running this front office?</p>
+
+  <label style="font-weight:700; margin-bottom:8px; display:block;">Your GM Name:</label>
+  <input type="text" class="team-name-input" id="gm-name" placeholder="Enter your name..." maxlength="20">
+
+  <label style="font-weight:700; margin:20px 0 8px; display:block;">Pick Your Badge:</label>
+  <div class="avatar-grid" id="avatar-grid"></div>
+
+  <br>
+  <button class="btn btn-primary" onclick="confirmSetup()">START DRAFTING!</button>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div class="screen" id="game-screen">
+  <!-- HUD -->
+  <div class="game-hud">
+    <div class="hud-item">
+      <span id="hud-avatar">🏀</span>
+      <div>
+        <div class="hud-label">GM</div>
+        <div class="hud-value" id="hud-name">Player</div>
+      </div>
+    </div>
+    <div class="hud-item">
+      <div>
+        <div class="hud-label">Round</div>
+        <div class="hud-value" id="hud-round">1/5</div>
+      </div>
+    </div>
+    <div class="hud-item">
+      <div>
+        <div class="hud-label">Score</div>
+        <div class="score-display" id="hud-score">0</div>
+      </div>
+    </div>
+    <div class="streak-badge" id="streak-badge">🔥 <span id="streak-count">0</span> Streak</div>
+    <div class="hud-item" id="hud-difficulty-display">
+      <div class="hud-label" id="hud-diff-label">ROOKIE</div>
+    </div>
+  </div>
+
+  <!-- Timer (hard mode) -->
+  <div class="timer-bar" id="timer-bar" style="display:none;">
+    <div class="timer-fill" id="timer-fill" style="width:100%"></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <!-- Scenario -->
+  <div class="scenario-card slide-up" id="scenario-card"></div>
+</div>
+
+<!-- ===== FEEDBACK OVERLAY ===== -->
+<div class="feedback-overlay" id="feedback-overlay">
+  <div class="feedback-card" id="feedback-card"></div>
+</div>
+
+<!-- ===== RESULT SCREEN ===== -->
+<div class="screen" id="result-screen">
+  <div class="result-card" id="result-card"></div>
+</div>
+
+<script>
+// ============================================
+// GAME DATA
+// ============================================
+
+const CLAIM_CODES = {
+  easy: "ROOKIE-DRAFT-2025",
+  medium: "SCOUT-ELITE-MVP",
+  hard: "GM-LEGEND-CHAMP"
+};
+
+const PASS_THRESHOLD = { easy: 0.5, medium: 0.6, hard: 0.7 };
+
+const AVATARS = ['🏀','🏈','🏆','⭐','👑','🦅','🐻','🦁','🐅','🐺','🦈','🔥','💎','🎯','🚀','🎮'];
+
+// ==== SCENARIOS ====
+// Each scenario: league, team info, question, prospects, correctIndex, explanation
+// We'll define different sets per difficulty
+
+function getScenarios(difficulty) {
+  const allScenarios = [];
+
+  // ----- NBA SCENARIOS -----
+
+  allScenarios.push({
+    league: 'nba',
+    teamName: 'Metro City Meteors',
+    record: '46-36 • Lost in 2nd Round',
+    star: '27-year-old All-Star scoring guard',
+    pick: '#18 in the 1st Round',
+    timeline: 'Win in the next 2-3 years',
+    strengths: 'Elite on-ball creator, solid pick-and-roll offense, decent floor spacing',
+    weaknesses: 'Wing defense, rim protection, rebounding',
+    question: difficulty === 'easy'
+      ? 'Your team is BAD at defense and rebounding. Which player best FITS what your team needs?'
+      : difficulty === 'medium'
+        ? 'Given the Meteors\' championship window and weaknesses, which prospect gives the best FIT for a playoff push?'
+        : 'Considering the Meteors\' 2-3 year window, existing star guard, and defensive liabilities, which prospect maximizes championship equity?',
+    hint: 'Think about what the Meteors are MISSING. They already have a star scorer — do they need more scoring or better defense?',
+    prospects: [
+      {
+        name: 'Jaylen Torres',
+        pos: "6'4 Combo Guard",
+        info: 'Three-level scorer, great in pick-and-roll. Average defender, smaller frame.',
+        tag: 'bpa', tagLabel: 'Offensive Talent',
+        detail: 'Could become a #2 scoring option but overlaps with your star guard.'
+      },
+      {
+        name: 'Marcus Webb',
+        pos: "6'7 3&D Wing",
+        info: 'Great spot-up shooter, strong defender, guards positions 2-4. Not a self-creator.',
+        tag: 'fit', tagLabel: 'Team Fit',
+        detail: 'Exactly what a team with a star ball-handler needs — shooting and defense without needing the ball.'
+      },
+      {
+        name: 'DeAndre Okafor',
+        pos: "6'11 Raw Rim Protector",
+        info: 'Shot blocking, lob threat, rebounds. Very raw offense, foul trouble.',
+        tag: 'risky', tagLabel: 'High Risk',
+        detail: 'Fixes rim protection but may take 2-3 years to develop — might not be ready in time.'
+      },
+      {
+        name: 'Chris Nakamura',
+        pos: "6'8 Connector Forward",
+        info: 'Smart passer, good team defender, moves the ball. OK shooter, not super athletic.',
+        tag: 'fit', tagLabel: 'Glue Guy',
+        detail: 'Raises the team ceiling as a glue guy, but doesn\'t fix the biggest defensive holes.'
+      }
+    ],
+    correctIndex: 1,
+    explanation: "Marcus Webb is the best FIT here! The Meteors already have a star scorer, so they don't need another guard who needs the ball. Webb gives them 3-and-D production — exactly what championship teams need next to a star. He can shoot, defend multiple positions, and doesn't need plays called for him."
+  });
+
+  allScenarios.push({
+    league: 'nba',
+    teamName: 'Lakewood Thunder',
+    record: '28-54 • Rebuilding',
+    star: '20-year-old point guard (2nd year)',
+    pick: '#5 in the 1st Round',
+    timeline: 'Long-term rebuild (3-5 years)',
+    strengths: 'Young point guard with huge potential, lots of cap space',
+    weaknesses: 'No second star, weak shooting, bad defense everywhere',
+    question: difficulty === 'easy'
+      ? 'Your team is REBUILDING and needs the BEST talent possible. Who has the highest ceiling?'
+      : difficulty === 'medium'
+        ? 'The Thunder are years away from competing. Should they draft for need or take the best talent on the board?'
+        : 'With a long rebuild timeline and a young PG cornerstone, how do you maximize long-term upside while considering positional value?',
+    hint: 'When your team is rebuilding, you usually want the BEST player available (BPA) — the one with the highest potential!',
+    prospects: [
+      {
+        name: 'Zion Matthews',
+        pos: "6'9 Two-Way Wing",
+        info: 'Elite athlete, great defender, developing jump shot. Sky-high ceiling.',
+        tag: 'bpa', tagLabel: 'BPA Pick',
+        detail: 'Potential future All-Star who can defend and score. Perfect timeline match.'
+      },
+      {
+        name: 'Kyle Patterson',
+        pos: "6'3 Sharpshooter Guard",
+        info: 'Lights-out 3pt shooter, limited athleticism, average defense.',
+        tag: 'fit', tagLabel: 'Fills Need',
+        detail: 'Fixes shooting but limited ceiling. Role player, not a building block.'
+      },
+      {
+        name: 'Andre Williams',
+        pos: "7'0 Traditional Center",
+        info: 'Good rebounder, post scorer, slow feet, can\'t shoot threes.',
+        tag: 'risky', tagLabel: 'Old School',
+        detail: 'Solid player but doesn\'t fit the modern NBA. Limited upside.'
+      },
+      {
+        name: 'Diego Ramirez',
+        pos: "6'6 Point Forward",
+        info: 'Great passer, high IQ, decent shooter. Not super explosive.',
+        tag: 'fit', tagLabel: 'Smart Pick',
+        detail: 'Good player but might overlap with your young PG as a playmaker.'
+      }
+    ],
+    correctIndex: 0,
+    explanation: "Zion Matthews is the BPA pick and perfect for a rebuilding team! When you're years away from competing, you take the most talented player — the one with the highest ceiling. Zion's two-way ability and elite athleticism make him a potential franchise cornerstone next to your young PG."
+  });
+
+  allScenarios.push({
+    league: 'nba',
+    teamName: 'Summit City Kings',
+    record: '52-30 • Title Contender',
+    star: '30-year-old MVP-caliber forward',
+    pick: '#28 in the 1st Round',
+    timeline: 'WIN NOW — star is in his prime',
+    strengths: 'Elite offense, deep bench, great coaching',
+    weaknesses: 'Need a backup center badly, perimeter D could improve',
+    question: difficulty === 'easy'
+      ? 'Your team is trying to win a championship RIGHT NOW. What do they need most?'
+      : difficulty === 'medium'
+        ? 'With a title-contending roster and a late pick, what type of player helps you win a ring this year?'
+        : 'At pick #28 with a championship-or-bust mentality, how do you balance immediate impact vs. long-term development?',
+    hint: 'Contending teams need players who can help RIGHT AWAY — not projects who need years to develop!',
+    prospects: [
+      {
+        name: 'Miles Jackson',
+        pos: "6'5 Raw Athletic Wing",
+        info: 'Incredible athlete, but very raw skills. Needs 2-3 years of development.',
+        tag: 'risky', tagLabel: 'Project',
+        detail: 'Highest ceiling in this group but won\'t help you win now.'
+      },
+      {
+        name: 'Trevor Chen',
+        pos: "6'10 Stretch Big",
+        info: 'Can shoot 3s, protect the rim, and play solid D. NBA-ready right now.',
+        tag: 'fit', tagLabel: 'Perfect Fit',
+        detail: 'Exactly what a contender needs at #28 — ready to contribute in the playoffs!'
+      },
+      {
+        name: 'DeMarcus Hall',
+        pos: "6'2 Score-First Guard",
+        info: 'Explosive scorer off the bench. Shaky defense, turnover prone.',
+        tag: 'bpa', tagLabel: 'Microwave',
+        detail: 'Fun player but doesn\'t address any real needs for this roster.'
+      },
+      {
+        name: 'Isaiah Brooks',
+        pos: "6'7 Defensive Specialist",
+        info: 'Lockdown defender but can\'t shoot at all. Limited offensive game.',
+        tag: 'fit', tagLabel: 'Defender',
+        detail: 'Great D but his lack of shooting could hurt playoff spacing.'
+      }
+    ],
+    correctIndex: 1,
+    explanation: "Trevor Chen is the perfect pick for a contender! At #28, you need someone who can contribute RIGHT NOW. Chen fills the backup center need, can shoot 3s (keeping the floor spaced for your MVP), and is defensively solid. Contending teams need ready-made role players, not projects!"
+  });
+
+  // ----- NFL SCENARIOS -----
+
+  allScenarios.push({
+    league: 'nfl',
+    teamName: 'Bay City Hawks',
+    record: '10-7 • Lost in Divisional Round',
+    star: '25-year-old top-10 quarterback',
+    pick: '#21 in the 1st Round',
+    timeline: 'Win-now with QB on a big contract',
+    strengths: 'Passing game, QB + WR1 connection, solid offensive scheme',
+    weaknesses: 'Offensive line depth, run defense, aging secondary',
+    question: difficulty === 'easy'
+      ? 'Your QB keeps getting hit because the offensive line is weak. Which player protects him best?'
+      : difficulty === 'medium'
+        ? 'With multiple weaknesses but a franchise QB, which prospect gives the Hawks the biggest boost?'
+        : 'Balancing O-line protection for your franchise QB against defensive needs, which pick optimizes the Hawks\' Super Bowl window?',
+    hint: 'If your star QB keeps getting sacked, it doesn\'t matter how good your receivers are! Protecting the QB is priority #1.',
+    prospects: [
+      {
+        name: 'Tyreek Washington',
+        pos: 'Elite WR2',
+        info: 'Explosive route runner, deep threat, separation king. Thin frame, average blocker.',
+        tag: 'bpa', tagLabel: 'Weapon',
+        detail: 'Gives your QB another weapon but you already have a great WR1. Doesn\'t fix O-line or defense.'
+      },
+      {
+        name: 'David O\'Brien',
+        pos: 'OT — Elite Pass Protector',
+        info: 'Athletic tackle, great in pass pro, handles speed rushers. Needs work in run game.',
+        tag: 'fit', tagLabel: 'Protects QB',
+        detail: 'Directly protects your franchise QB — the most important player on the team.'
+      },
+      {
+        name: 'Jalen Reed',
+        pos: 'Ball-Hawk Cornerback',
+        info: 'Great ball skills, picks, closing speed. Can get beat deep, gambles sometimes.',
+        tag: 'risky', tagLabel: 'Boom or Bust',
+        detail: 'Helps the aging secondary but inconsistent play could be a problem.'
+      },
+      {
+        name: 'Kwame Johnson',
+        pos: 'Run-Stuffing DT',
+        info: 'Dominant run defender, occupies double teams. Limited pass rush.',
+        tag: 'fit', tagLabel: 'Run Stopper',
+        detail: 'Fixes run D but might not be on the field in obvious passing situations.'
+      }
+    ],
+    correctIndex: 1,
+    explanation: "David O'Brien is the smartest pick! In the NFL, PROTECTING YOUR QUARTERBACK is everything. The Hawks have a franchise QB on a big contract — if he gets hurt, the whole season is over. O'Brien directly solves the O-line weakness and keeps your most important player safe and productive."
+  });
+
+  allScenarios.push({
+    league: 'nfl',
+    teamName: 'Iron Valley Wolves',
+    record: '4-13 • Full Rebuild',
+    star: 'No franchise player yet',
+    pick: '#3 Overall',
+    timeline: 'Complete rebuild — looking for a cornerstone',
+    strengths: 'Lots of draft picks, tons of cap space',
+    weaknesses: 'Everything — no QB, bad offense, bad defense',
+    question: difficulty === 'easy'
+      ? 'Your team has NO good quarterback. The best QB prospect in years is available. What do you do?'
+      : difficulty === 'medium'
+        ? 'At pick #3 with no franchise QB, how important is taking a quarterback vs. the best non-QB?'
+        : 'With the #3 pick and no foundational pieces, how do you weigh positional value of QB against a potentially superior non-QB prospect?',
+    hint: 'In the NFL, having a great quarterback is the MOST important thing. Teams without good QBs almost never win championships!',
+    prospects: [
+      {
+        name: 'Caleb Richardson',
+        pos: 'Franchise Quarterback',
+        info: 'Strong arm, great decision-maker, leader. Can make every throw. Clean injury history.',
+        tag: 'bpa', tagLabel: 'Franchise QB',
+        detail: 'Potential franchise-changing player at the most important position in sports.'
+      },
+      {
+        name: 'Malik Thompson',
+        pos: 'Generational Edge Rusher',
+        info: 'Most talented pass rusher in the draft. Freakish athleticism, dominant.',
+        tag: 'bpa', tagLabel: 'Best Player',
+        detail: 'Best pure talent in the draft, but edge rushers don\'t carry teams like QBs do.'
+      },
+      {
+        name: 'James Sullivan',
+        pos: 'All-Pro Left Tackle',
+        info: 'Day-1 starter, elite pass protector. Anchor for any offensive line.',
+        tag: 'fit', tagLabel: 'Foundation',
+        detail: 'Great player but you need someone to protect first — and you don\'t have a QB yet.'
+      },
+      {
+        name: 'Tyler Osei',
+        pos: 'Lockdown Cornerback',
+        info: 'Shutdown corner, great in man and zone. Athletic freak.',
+        tag: 'bpa', tagLabel: 'Elite CB',
+        detail: 'Incredible talent but cornerbacks rarely transform a franchise like a QB can.'
+      }
+    ],
+    correctIndex: 0,
+    explanation: "Caleb Richardson — the franchise QB — is the clear pick! In the NFL, quarterback is BY FAR the most valuable position. Teams without great QBs almost never win Super Bowls. When you're rebuilding from scratch and a franchise QB is available, you take him every single time. He's the foundation everything else is built on."
+  });
+
+  allScenarios.push({
+    league: 'nfl',
+    teamName: 'Coastal City Sharks',
+    record: '12-5 • Lost in Conference Championship',
+    star: '28-year-old elite running back + strong defense',
+    pick: '#24 in the 1st Round',
+    timeline: 'Super Bowl window is NOW',
+    strengths: 'Top-5 rushing attack, elite defense, experienced roster',
+    weaknesses: 'QB is "good enough" but not elite, receiving corps is thin',
+    question: difficulty === 'easy'
+      ? 'Your team is SO close to the Super Bowl. They need someone who helps them win RIGHT NOW. Who fits best?'
+      : difficulty === 'medium'
+        ? 'One game from the Super Bowl last year — what\'s the missing piece for the Sharks to get over the hump?'
+        : 'With an elite run game and defense but middling passing attack, does the Sharks\' best path to a Super Bowl go through upgrading receiving talent or reinforcing their identity?',
+    hint: 'The Sharks lost in the conference championship — they were SO close! Think about what held them back. Their passing game is the weak spot.',
+    prospects: [
+      {
+        name: 'Brandon Lewis',
+        pos: 'Explosive Slot Receiver',
+        info: 'YAC monster, moves chains, reliable hands. Not a deep threat.',
+        tag: 'fit', tagLabel: 'Chain Mover',
+        detail: 'Gives your "good enough" QB an easy target underneath. Helps the passing game immediately.'
+      },
+      {
+        name: 'DeVante Harris',
+        pos: 'Speed WR — Deep Threat',
+        info: '4.3 speed, stretches the field, big play ability. Can drop easy catches.',
+        tag: 'bpa', tagLabel: 'Big Play',
+        detail: 'Opens up the whole offense with speed but inconsistent hands are concerning.'
+      },
+      {
+        name: 'Marcus Riley',
+        pos: 'Power Running Back',
+        info: 'Bruising runner, short yardage beast. Your RB1 is already elite.',
+        tag: 'risky', tagLabel: 'Redundant',
+        detail: 'You already have an elite RB. Spending a 1st rounder on a backup RB is a waste.'
+      },
+      {
+        name: 'Anthony Park',
+        pos: 'Reliable Tight End',
+        info: 'Great blocker AND receiver. Helps run game and gives QB a safety valve.',
+        tag: 'fit', tagLabel: 'Versatile',
+        detail: 'Upgrades passing AND run game. The kind of player that puts a great team over the top.'
+      }
+    ],
+    correctIndex: 3,
+    explanation: "Anthony Park is the championship-winning pick! The Sharks are built on running and defense. A tight end who can BLOCK (making the run game even better) AND catch (giving the QB a reliable target) is the ultimate fit. He reinforces what the team does well while fixing the passing weakness. That's how contenders think!"
+  });
+
+  // Additional scenarios for variety
+  allScenarios.push({
+    league: 'nba',
+    teamName: 'Desert Blaze',
+    record: '38-44 • Missed Playoffs',
+    star: '24-year-old dynamic small forward',
+    pick: '#12 in the 1st Round',
+    timeline: 'Ready to take the next step',
+    strengths: 'Athletic wings, fast-paced offense, young core',
+    weaknesses: 'No true point guard, poor half-court offense, average defense',
+    question: difficulty === 'easy'
+      ? 'Your team has NO real point guard to run the offense. Who should you pick?'
+      : difficulty === 'medium'
+        ? 'The Blaze have athletes but no floor general. How do you upgrade the half-court offense?'
+        : 'With athletic wings but no half-court orchestrator, how do you balance adding a floor general versus maximizing your existing talent\'s strengths?',
+    hint: 'A point guard is the "brain" of the offense — they set up plays and get everyone involved. The Blaze really need one!',
+    prospects: [
+      {
+        name: 'Jordan Blake',
+        pos: "6'3 True Point Guard",
+        info: 'Elite passer, great court vision, solid defender. Average scorer.',
+        tag: 'fit', tagLabel: 'Floor General',
+        detail: 'Exactly what this team needs — someone to run the offense and get the star SF easy looks.'
+      },
+      {
+        name: 'Cameron White',
+        pos: "6'6 Scoring Wing",
+        info: 'Bucket getter, ISO scorer, can create for himself. Poor passer, ball stopper.',
+        tag: 'bpa', tagLabel: 'Scorer',
+        detail: 'Talented scorer but you already have wings. Another ball-dominant player might hurt team flow.'
+      },
+      {
+        name: 'Devon Harris',
+        pos: "6'10 Stretch Four",
+        info: 'Great 3pt shooter, decent rebounder. Slow feet on defense.',
+        tag: 'risky', tagLabel: 'Spacing',
+        detail: 'Adds shooting but doesn\'t solve the point guard problem at all.'
+      },
+      {
+        name: 'Ray Mitchell',
+        pos: "6'8 Athletic Big",
+        info: 'High-flyer, lob threat, shot blocker. No offensive skills beyond dunking.',
+        tag: 'risky', tagLabel: 'Athlete',
+        detail: 'Fun player but you already have plenty of athletes. Doesn\'t fix the core issue.'
+      }
+    ],
+    correctIndex: 0,
+    explanation: "Jordan Blake is the perfect pick! The Blaze have tons of athletic talent but nobody to organize it. A true point guard with elite passing and court vision turns those athletes into a real TEAM. Blake will make everyone better and transform the half-court offense from chaotic to elite."
+  });
+
+  allScenarios.push({
+    league: 'nfl',
+    teamName: 'Mountain Peak Rams',
+    record: '8-9 • Stuck in the Middle',
+    star: '26-year-old solid quarterback (not elite, but good)',
+    pick: '#15 in the 1st Round',
+    timeline: 'Trying to become a true contender',
+    strengths: 'Good QB play, decent run game, solid coaching staff',
+    weaknesses: 'Pass rush is TERRIBLE (dead last), secondary is OK but not great',
+    question: difficulty === 'easy'
+      ? 'Your team\'s pass rush is the WORST in the league. They can\'t get to the quarterback at all! What do they need?'
+      : difficulty === 'medium'
+        ? 'The Rams\' dead-last pass rush is holding back an otherwise decent team. How do you fix it?'
+        : 'With a league-worst pass rush but functional roster otherwise, how do you weigh a premium edge rusher against other roster-building strategies?',
+    hint: 'If you can\'t pressure the other team\'s quarterback, their offense will pick you apart! Pass rush is one of the most important things in the NFL.',
+    prospects: [
+      {
+        name: 'Xavier Jones',
+        pos: 'Elite Edge Rusher',
+        info: 'First-step explosion, bend, power moves. Complete pass rusher. Some injury history.',
+        tag: 'fit', tagLabel: 'Fixes Need',
+        detail: 'Directly fixes the team\'s #1 weakness. A great pass rusher transforms an entire defense.'
+      },
+      {
+        name: 'Marcus Young',
+        pos: 'Shutdown Safety',
+        info: 'Ball hawk, great range, smart player. The secondary is already OK though.',
+        tag: 'bpa', tagLabel: 'Talented',
+        detail: 'Great player but the secondary isn\'t the problem. Pass rush is.'
+      },
+      {
+        name: 'Cole Williams',
+        pos: 'Offensive Guard',
+        info: 'Mauler in the run game, solid in pass pro. Helps the run game get even better.',
+        tag: 'fit', tagLabel: 'O-Line',
+        detail: 'Run game is already decent. This doesn\'t move the needle enough.'
+      },
+      {
+        name: 'Darius Grant',
+        pos: 'Speedy Wide Receiver',
+        info: '4.3 burner, deep threat, exciting playmaker. One-dimensional route tree.',
+        tag: 'bpa', tagLabel: 'Playmaker',
+        detail: 'Fun player but the offense is fine. The defense desperately needs help.'
+      }
+    ],
+    correctIndex: 0,
+    explanation: "Xavier Jones is the no-brainer pick! When your pass rush is DEAD LAST in the league, fixing it is priority #1. An elite edge rusher is one of the most valuable players in football — they can wreck game plans, force turnovers, and completely change a defense. Jones transforms the Rams from pretenders to contenders."
+  });
+
+  // Shuffle and pick the right number
+  const shuffled = allScenarios.sort(() => Math.random() - 0.5);
+  const count = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 6 : 7;
+  return shuffled.slice(0, count);
+}
+
+// ============================================
+// GAME STATE
+// ============================================
+let state = {
+  difficulty: 'easy',
+  gmName: 'Player',
+  avatar: '🏀',
+  score: 0,
+  round: 0,
+  streak: 0,
+  maxStreak: 0,
+  correct: 0,
+  total: 0,
+  scenarios: [],
+  timerInterval: null,
+  timeLeft: 0
+};
+
+// ============================================
+// PARTICLES
+// ============================================
+function createParticles() {
+  const container = document.getElementById('particles');
+  const colors = ['#00d4ff','#ffd700','#f57c25','#e74c3c','#2ecc71','#9b59b6'];
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 6 + 2;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    container.appendChild(p);
+  }
+}
+createParticles();
+
+// ============================================
+// CONFETTI
+// ============================================
+function launchConfetti() {
+  const container = document.getElementById('confetti-container');
+  const colors = ['#ffd700','#ff6b6b','#00d4ff','#2ecc71','#f39c12','#9b59b6','#ff69b4','#fff'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+    piece.style.animationDelay = (Math.random() * 0.8) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    const size = Math.random() * 10 + 6;
+    piece.style.width = size + 'px';
+    piece.style.height = size + 'px';
+    container.appendChild(piece);
+  }
+  setTimeout(() => { container.innerHTML = ''; }, 4000);
+}
+
+// ============================================
+// COMBO FLOAT
+// ============================================
+function showCombo(text) {
+  const el = document.createElement('div');
+  el.className = 'combo-float';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ============================================
+// AVATARS
+// ============================================
+function initAvatars() {
+  const grid = document.getElementById('avatar-grid');
+  grid.innerHTML = '';
+  AVATARS.forEach((a, i) => {
+    const div = document.createElement('div');
+    div.className = 'avatar-option' + (i === 0 ? ' selected' : '');
+    div.textContent = a;
+    div.onclick = () => {
+      document.querySelectorAll('.avatar-option').forEach(x => x.classList.remove('selected'));
+      div.classList.add('selected');
+      state.avatar = a;
+    };
+    grid.appendChild(div);
+  });
+  state.avatar = AVATARS[0];
+}
+initAvatars();
+
+// ============================================
+// START GAME
+// ============================================
+function startGame(diff) {
+  state.difficulty = diff;
+  showScreen('team-setup');
+}
+
+function confirmSetup() {
+  const name = document.getElementById('gm-name').value.trim() || 'GM Boss';
+  state.gmName = name;
+  state.score = 0;
+  state.round = 0;
+  state.streak = 0;
+  state.maxStreak = 0;
+  state.correct = 0;
+  state.scenarios = getScenarios(state.difficulty);
+  state.total = state.scenarios.length;
+
+  document.getElementById('hud-name').textContent = state.gmName;
+  document.getElementById('hud-avatar').textContent = state.avatar;
+  document.getElementById('hud-score').textContent = '0';
+
+  const diffLabel = state.difficulty === 'easy' ? 'ROOKIE' : state.difficulty === 'medium' ? 'SCOUT' : 'GM ELITE';
+  const diffColor = state.difficulty === 'easy' ? 'var(--easy-color)' : state.difficulty === 'medium' ? 'var(--medium-color)' : 'var(--hard-color)';
+  document.getElementById('hud-diff-label').textContent = diffLabel;
+  document.getElementById('hud-diff-label').style.color = diffColor;
+
+  showScreen('game-screen');
+  loadRound();
+}
+
+// ============================================
+// LOAD ROUND
+// ============================================
+function loadRound() {
+  if (state.round >= state.total) {
+    showResults();
+    return;
+  }
+
+  const s = state.scenarios[state.round];
+  const card = document.getElementById('scenario-card');
+
+  document.getElementById('hud-round').textContent = `${state.round + 1}/${state.total}`;
+  document.getElementById('progress-fill').style.width = `${(state.round / state.total) * 100}%`;
+
+  // Show/hide timer for hard mode
+  const timerBar = document.getElementById('timer-bar');
+  if (state.difficulty === 'hard') {
+    timerBar.style.display = 'block';
+    startTimer();
+  } else {
+    timerBar.style.display = 'none';
+  }
+
+  const hintSection = state.difficulty !== 'hard' ? `
+    <button class="hint-btn" onclick="showHint()">💡 Need a Hint?</button>
+    <div class="hint-text" id="hint-text">${s.hint}</div>
+  ` : '';
+
+  // Build prospect cards
+  let prospectsHTML = '';
+  s.prospects.forEach((p, i) => {
+    const showTags = state.difficulty === 'easy';
+    prospectsHTML += `
+      <div class="prospect-card" id="prospect-${i}" onclick="selectProspect(${i})">
+        <div class="prospect-name">${p.name}</div>
+        <div class="prospect-pos">${p.pos}</div>
+        <div class="prospect-info">${p.info}</div>
+        ${state.difficulty === 'easy' ? `<div class="prospect-info" style="margin-top:6px;color:#aaa;font-style:italic;">${p.detail}</div>` : ''}
+        ${showTags ? `<span class="prospect-tag tag-${p.tag}">${p.tagLabel}</span>` : ''}
+      </div>
+    `;
+  });
+
+  card.innerHTML = `
+    <span class="scenario-league ${s.league}">${s.league.toUpperCase()}</span>
+    <div class="scenario-team-name">${s.teamName}</div>
+    <div class="scenario-record">${s.record}</div>
+
+    <div class="scenario-details">
+      <div class="detail-box">
+        <h4>⭐ Franchise Star</h4>
+        <p>${s.star}</p>
+      </div>
+      <div class="detail-box">
+        <h4>📍 Draft Pick</h4>
+        <p>${s.pick}</p>
+      </div>
+      <div class="detail-box strengths">
+        <h4>💪 Strengths</h4>
+        <p>${s.strengths}</p>
+      </div>
+      <div class="detail-box weaknesses">
+        <h4>⚠️ Weaknesses</h4>
+        <p>${s.weaknesses}</p>
+      </div>
+      <div class="detail-box">
+        <h4>📅 Timeline</h4>
+        <p>${s.timeline}</p>
+      </div>
+    </div>
+
+    <div class="question-box">
+      <h3>🤔 GM Decision Time!</h3>
+      <p>${s.question}</p>
+    </div>
+
+    ${hintSection}
+
+    <div class="prospect-grid">
+      ${prospectsHTML}
+    </div>
+  `;
+
+  card.className = 'scenario-card slide-up';
+
+  // Update streak badge
+  const streakBadge = document.getElementById('streak-badge');
+  if (state.streak >= 2) {
+    streakBadge.classList.add('show');
+    document.getElementById('streak-count').textContent = state.streak;
+  } else {
+    streakBadge.classList.remove('show');
+  }
+}
+
+// ============================================
+// TIMER (Hard Mode)
+// ============================================
+function startTimer() {
+  clearInterval(state.timerInterval);
+  state.timeLeft = 30; // 30 seconds
+  const fill = document.getElementById('timer-fill');
+  fill.style.width = '100%';
+
+  state.timerInterval = setInterval(() => {
+    state.timeLeft -= 0.1;
+    const pct = (state.timeLeft / 30) * 100;
+    fill.style.width = Math.max(0, pct) + '%';
+
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerInterval);
+      // Time's up — auto wrong
+      handleAnswer(-1);
+    }
+  }, 100);
+}
+
+// ============================================
+// HINT
+// ============================================
+function showHint() {
+  const hint = document.getElementById('hint-text');
+  if (hint) hint.classList.toggle('show');
+}
+
+// ============================================
+// SELECT PROSPECT
+// ============================================
+function selectProspect(index) {
+  // Prevent double-click
+  document.querySelectorAll('.prospect-card').forEach(c => {
+    c.style.pointerEvents = 'none';
+  });
+  clearInterval(state.timerInterval);
+  handleAnswer(index);
+}
+
+// ============================================
+// HANDLE ANSWER
+// ============================================
+function handleAnswer(index) {
+  const s = state.scenarios[state.round];
+  const isCorrect = index === s.correctIndex;
+
+  // Highlight cards
+  if (index >= 0) {
+    document.getElementById(`prospect-${index}`).classList.add(isCorrect ? 'correct' : 'wrong');
+  }
+  if (!isCorrect) {
+    document.getElementById(`prospect-${s.correctIndex}`).classList.add('correct');
+  }
+
+  // Calculate points
+  let points = 0;
+  if (isCorrect) {
+    const base = state.difficulty === 'easy' ? 100 : state.difficulty === 'medium' ? 200 : 350;
+    const streakBonus = Math.min(state.streak, 5) * 25;
+    const timeBonus = state.difficulty === 'hard' ? Math.floor(state.timeLeft * 5) : 0;
+    points = base + streakBonus + timeBonus;
+    state.score += points;
+    state.streak++;
+    state.correct++;
+    if (state.streak > state.maxStreak) state.maxStreak = state.streak;
+
+    document.getElementById('hud-score').textContent = state.score;
+
+    if (state.streak >= 3) showCombo(`🔥 ${state.streak}x STREAK!`);
+    else if (state.streak === 2) showCombo('NICE!');
+  } else {
+    state.streak = 0;
+    if (index < 0) showCombo('⏰ TIME\'S UP!');
+  }
+
+  // Show feedback after a short delay
+  setTimeout(() => {
+    showFeedback(isCorrect, points, s);
+  }, 600);
+}
+
+// ============================================
+// FEEDBACK
+// ============================================
+function showFeedback(isCorrect, points, scenario) {
+  const overlay = document.getElementById('feedback-overlay');
+  const card = document.getElementById('feedback-card');
+
+  const icon = isCorrect ? '🎉' : (state.round < 0 ? '⏰' : '😤');
+  const title = isCorrect ? ['GREAT PICK!', 'NAILED IT!', 'GM GENIUS!', 'PERFECT READ!'][Math.floor(Math.random()*4)]
+    : ['TOUGH BREAK!', 'NOT QUITE!', 'SWING AND A MISS!'][Math.floor(Math.random()*3)];
+
+  card.innerHTML = `
+    <div class="feedback-icon">${icon}</div>
+    <div class="feedback-title" style="color:${isCorrect ? 'var(--green)' : 'var(--hard-color)'}">${title}</div>
+    ${isCorrect ? `<div class="points-earned">+${points} PTS</div>` : ''}
+    <div class="feedback-text">${scenario.explanation}</div>
+    <button class="btn ${isCorrect ? 'btn-gold' : 'btn-primary'}" onclick="nextRound()">
+      ${state.round + 1 < state.total ? 'NEXT PICK →' : 'SEE RESULTS'}
+    </button>
+  `;
+
+  overlay.classList.add('active');
+  if (isCorrect) launchConfetti();
+}
+
+function nextRound() {
+  document.getElementById('feedback-overlay').classList.remove('active');
+  state.round++;
+  loadRound();
+}
+
+// ============================================
+// RESULTS
+// ============================================
+function showResults() {
+  showScreen('result-screen');
+
+  const pct = state.correct / state.total;
+  const passed = pct >= PASS_THRESHOLD[state.difficulty];
+  const stars = pct >= 0.9 ? 5 : pct >= 0.75 ? 4 : pct >= 0.6 ? 3 : pct >= 0.4 ? 2 : 1;
+  const starStr = '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
+
+  const titleMap = {
+    5: 'LEGENDARY GM!',
+    4: 'ALL-STAR GM!',
+    3: 'SOLID GM!',
+    2: 'DEVELOPING GM',
+    1: 'BENCH WARMER'
+  };
+
+  const messageMap = {
+    5: 'You absolutely CRUSHED it! Every owner in the league wants to hire you!',
+    4: 'Incredible draft! You really know your stuff. Championship-caliber decisions!',
+    3: 'Good job, GM! You made some smart picks. Keep studying the game!',
+    2: 'Not bad for a rookie! You\'re learning. Study those team needs and try again!',
+    1: 'Tough day at the office. Even the best GMs have bad drafts. Try again!'
+  };
+
+  const card = document.getElementById('result-card');
+
+  let claimHTML = '';
+  if (passed) {
+    claimHTML = `
+      <div class="claim-code-box">
+        <div class="claim-code-label">🎟️ Your ${state.difficulty.toUpperCase()} Tier Claim Code:</div>
+        <div class="claim-code" id="claim-code-text">${CLAIM_CODES[state.difficulty]}</div>
+        <br>
+        <button class="claim-copy-btn" onclick="copyCode()">📋 COPY CODE</button>
+      </div>
+    `;
+  } else {
+    claimHTML = `
+      <div style="background:rgba(231,76,60,0.1);border:2px solid var(--hard-color);border-radius:14px;padding:20px;margin:20px 0;">
+        <p style="color:var(--hard-color);font-weight:700;">You needed ${Math.ceil(PASS_THRESHOLD[state.difficulty] * 100)}% correct to earn the claim code. Try again!</p>
+      </div>
+    `;
+  }
+
+  card.innerHTML = `
+    <div class="result-icon">${passed ? '🏆' : '📋'}</div>
+    <div class="result-title">${titleMap[stars]}</div>
+    <div class="result-stars">${starStr}</div>
+    <div class="result-score">${state.score} PTS</div>
+    <p style="color:#aaa;margin-bottom:5px;">
+      ${state.correct}/${state.total} correct picks
+      ${state.maxStreak >= 2 ? ` • Best streak: ${state.maxStreak}🔥` : ''}
+    </p>
+    <p style="color:#ccc;font-size:1.05rem;line-height:1.5;margin:15px 0;">${messageMap[stars]}</p>
+    ${claimHTML}
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:15px;">
+      <button class="btn btn-primary btn-sm" onclick="retryDifficulty()">🔄 TRY AGAIN</button>
+      <button class="btn btn-outline btn-sm" onclick="showScreen('difficulty-screen')">📋 CHANGE TIER</button>
+      <button class="btn btn-outline btn-sm" onclick="showScreen('title-screen')">🏠 HOME</button>
+    </div>
+  `;
+
+  if (passed) launchConfetti();
+}
+
+function retryDifficulty() {
+  startGame(state.difficulty);
+}
+
+function copyCode() {
+  const code = document.getElementById('claim-code-text').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.querySelector('.claim-copy-btn');
+    btn.textContent = '✅ COPIED!';
+    setTimeout(() => { btn.textContent = '📋 COPY CODE'; }, 2000);
+  }).catch(() => {
+    // Fallback
+    const el = document.createElement('textarea');
+    el.value = code;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    el.remove();
+    const btn = document.querySelector('.claim-copy-btn');
+    btn.textContent = '✅ COPIED!';
+    setTimeout(() => { btn.textContent = '📋 COPY CODE'; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
